@@ -27,8 +27,24 @@ Currently period parameters are ignored, and checks are done with fixed interval
 ## Execution
 Web Monitor includes two service executables:
 
-* `web_checker.py` - agent, which checks sites availability and publishes every check result to kafka topic.
+* `web_checker.py` - service, which checks sites availability and publishes every check result to kafka topic.
 * `kafka_pg_transfer.py` - service, which listens for kafka topic and commits all check results into PostgreSQL database.
+
+To execute the scripts from the source code
+
+    pip install -r requirement.txt
+
+    # To start the web-checker
+    web_checker.py -c config/web_monitor.py
+
+    # To start the kafka-pg transfer
+    kafka_pg_transfer.py -c conifg/web_monitor.py
+
+Note that to run both scripts simultaneously, you need two terminals
+
+## Requirements
+
+The toolset is tested in Python 3.8, other requirements are specified in the 'requirements.txt' file.
 
 
 ## Design Notes
@@ -54,7 +70,7 @@ shows the best throughput comapring to other approaches such as inserting messag
 using `executemany` method.
 
 ## References
-* (Postgresql Documentation)[https://www.postgresql.org/docs/12/index.html]
-* (Kafka-Python documentation and examples)[https://kafka-python.readthedocs.io/en/master/usage.html]
-* (Python structure article)[https://docs.python-guide.org/writing/structure/]
+* [Postgresql Documentation](https://www.postgresql.org/docs/12/index.html)
+* [Kafka-Python documentation and examples](https://kafka-python.readthedocs.io/en/master/usage.html)
+* [Python structure article](https://docs.python-guide.org/writing/structure/)
 
