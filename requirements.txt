@@ -2,3 +2,4 @@ requests
 pytest
 kafka-python
 psycopg2-binary
+pyyaml

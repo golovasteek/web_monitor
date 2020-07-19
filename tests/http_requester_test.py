@@ -1,4 +1,4 @@
-from context import web_monitor
+from context import web_monitor  # noqa
 from web_monitor.http_requester import HttpRequester
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import random
@@ -6,6 +6,7 @@ import threading
 import pytest
 
 random.seed(1987)
+
 
 class MockRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -36,18 +37,6 @@ class SinkMock():
         self.reports.append(test_report)
 
 
-def test_constructor():
-    configuration = {
-        "pages": [
-            {
-                "url": "http://example.com"
-            }
-        ]
-    }
-    def sink(_):
-        pass
-    requester = HttpRequester(configuration, sink)
-
 def test_non_existing_url():
     configuration = {
         "pages": [
@@ -64,6 +53,7 @@ def test_non_existing_url():
     assert len(sink.reports) == 1
     assert sink.reports[0].status_code == 521
 
+
 def test_success(http_server):
     server, thread = http_server
     configuration = {
@@ -76,6 +66,9 @@ def test_success(http_server):
     sink = SinkMock()
     requester = HttpRequester(configuration, sink)
     requester.do_requests()
-    
+
     assert len(sink.reports) == 1
     assert sink.reports[0].status_code == 200
+
+# TODO:
+# test for connection timeout

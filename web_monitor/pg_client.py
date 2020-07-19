@@ -14,7 +14,9 @@ class PgClient():
 
         with open(self.config["pw_file"], 'r') as f:
             self.password = f.read()
-        self.ensure_schema()
+        self._ensure_schema()
+
+    def __enter__(self):
         self.conn = psycopg2.connect(
             host=self.config["host"],
             port=self.config["port"],
@@ -22,9 +24,15 @@ class PgClient():
             dbname=self.config["dbname"],
             password=self.password,
             sslmode='require')
+        self.conn.autocommit = True
         self.cursor = self.conn.cursor()
+        return self
 
-    def ensure_schema(self):
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.cursor.close()
+        self.conn.close()
+
+    def _ensure_schema(self):
         """ Ensure that database, schema, and tables are created
         """
         with psycopg2.connect(
@@ -52,7 +60,8 @@ class PgClient():
             cursor.execute("""CREATE TABLE IF NOT EXISTS {table} (
                 timestamp TIMESTAMP,
                 url VARCHAR,
-                status_code NUMERIC
+                status_code NUMERIC,
+                PRIMARY KEY (timestamp, url)
             );""".format(table=self.table))
 
     def __call__(self, check_result: CheckResult):

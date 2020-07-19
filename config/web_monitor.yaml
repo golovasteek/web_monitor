@@ -1,17 +1,19 @@
 pages:
-    - url: aiven.io
+    - url: https://aiven.io
       period: 10
-    - url: github.com
+    - url: https://github.com
       period: 60
 
 kafka:
-    bootstrap_servers: kafka-1548488a-golovasteek-50e3.aivencloud.com:20597
+    bootstrap_servers:
+        - kafka-1548488a-golovasteek-50e3.aivencloud.com:20597
     ssl_keyfile: certs/key
     ssl_certfile: certs/auth.cert
-    ssl_cafile: cert/ca.cert
+    ssl_cafile: certs/ca.cert
     topic: web_monitor
     num_partitions: 1
     replication_factor: 3
+    consumer_group_id: pg_consumer
     
 
 postgres:

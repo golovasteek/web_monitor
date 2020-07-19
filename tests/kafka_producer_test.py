@@ -1,5 +1,5 @@
 from context import web_monitor  # noqa
-from web_monitor.kafka_producer import KafkaSink, KafkaReader, KafkaAdmin
+from web_monitor.kafka_producer import KafkaSink, KafkaReader
 
 from web_monitor.check_result import CheckResult
 
@@ -23,11 +23,11 @@ TEST_ITEM = CheckResult(
     )
 
 
-def test_produce_consume():
-    admin = KafkaAdmin(TEST_CONFIG)
+def mock_sink(report):
+    pass
 
-    def mock_sink(report):
-        pass
+
+def test_produce_consume():
 
     consumer = KafkaReader(TEST_CONFIG, mock_sink)
     for message in consumer.consumer:
@@ -42,3 +42,6 @@ def test_produce_consume():
         messages.append(message)
 
     assert len(messages) == 1
+
+# TODO:
+# add test for reader run.
