@@ -21,5 +21,5 @@ TEST_PG_CONFIG = {
 
 
 def test_connect():
-    client = PgClient(TEST_PG_CONFIG)
-    client(TEST_ITEM)
+    with PgClient(TEST_PG_CONFIG) as client:
+        client(TEST_ITEM)

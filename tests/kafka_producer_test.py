@@ -13,7 +13,8 @@ TEST_CONFIG = {
     "ssl_keyfile": "./certs/key",
     "topic": "test_web_monitor",
     "num_partitions": 1,
-    "replication_factor": 3
+    "replication_factor": 3,
+    "consumer_group_id": "test_consumer_group"
 }
 
 TEST_ITEM = CheckResult(
@@ -29,19 +30,19 @@ def mock_sink(report):
 
 def test_produce_consume():
 
-    consumer = KafkaReader(TEST_CONFIG, mock_sink)
-    for message in consumer.consumer:
-        pass
+    with KafkaReader(TEST_CONFIG, mock_sink) as consumer:
+        for message in consumer.consumer:
+            pass
 
-    producer = KafkaSink(TEST_CONFIG)
-    producer(TEST_ITEM)
-    producer.producer.close()
+        producer = KafkaSink(TEST_CONFIG)
+        producer(TEST_ITEM)
+        producer.producer.close()
 
-    messages = []
-    for message in consumer.consumer:
-        messages.append(message)
+        messages = []
+        for message in consumer.consumer:
+            messages.append(message)
 
-    assert len(messages) == 1
+        assert len(messages) == 1
 
 # TODO:
 # add test for reader run.
