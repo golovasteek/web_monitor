@@ -1,0 +1,24 @@
+pages:
+    - url: aiven.io
+      period: 10
+    - url: github.com
+      period: 60
+
+kafka:
+    bootstrap_servers: kafka-1548488a-golovasteek-50e3.aivencloud.com:20597
+    ssl_keyfile: certs/key
+    ssl_certfile: certs/auth.cert
+    ssl_cafile: cert/ca.cert
+    topic: web_monitor
+    num_partitions: 1
+    replication_factor: 3
+    
+
+postgres:
+    host: pg-26b4b6c0-golovasteek-50e3.aivencloud.com
+    port: 20595
+    user: avnadmin
+    dbname: web_monitor
+    default_dbname: defaultdb
+    pw_file: certs/pg_password
+

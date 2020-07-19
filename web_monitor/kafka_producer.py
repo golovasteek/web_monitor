@@ -1,17 +1,13 @@
 import json
-import os
 import logging
 
 from kafka import KafkaProducer, KafkaConsumer, KafkaAdminClient
 from kafka.admin import NewTopic
-from kafka.errors import TopicAlreadyExistsError, UnknownTopicOrPartitionError
+from kafka.errors import TopicAlreadyExistsError
 from web_monitor.check_result import CheckResult
 
 MAX_BLOCK_MS = 10000
 
-SSL_CA_FILE = "./certs/ca.cert"
-SSL_AUTH_CERT = "./certs/auth.cert"
-SSL_KEY = "./certs/key"
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -19,60 +15,43 @@ logger.setLevel(logging.DEBUG)
 
 
 class KafkaAdmin:
-    def __init__(self, bootstrap_servers, topic):
+    def __init__(self, kafka_config):
         self.admin = KafkaAdminClient(
-                bootstrap_servers=bootstrap_servers,
+                bootstrap_servers=kafka_config["bootstrap_servers"],
                 security_protocol="SSL",
-                ssl_cafile=SSL_CA_FILE,
-                ssl_certfile=SSL_AUTH_CERT,
-                ssl_keyfile=SSL_KEY)
-        self.topic = topic
-        self.num_partitions = 1  # FIXME: config
-        self.replication_factor = 1  # FIXME: config
+                ssl_cafile=kafka_config["ssl_cafile"],
+                ssl_certfile=kafka_config["ssl_certfile"],
+                ssl_keyfile=kafka_config["ssl_keyfile"])
+        self.topic = kafka_config["topic"]
+        self.num_partitions = kafka_config["num_partitions"]
+        self.replication_factor = kafka_config["replication_factor"]
         self._create_topic()
 
     def _create_topic(self):
         new_topic = NewTopic(
                 self.topic,
-                self.num_partitions, 
+                self.num_partitions,
                 self.replication_factor)
         try:
             logger.info("Ensuring topics %s", self.topic)
             self.admin.create_topics([new_topic])
-            
+
             logger.info("Topic %s created", self.topic)
         except TopicAlreadyExistsError:
             logger.info("Topic %s already exists", self.topic)
             return True
 
-        
-    def reset_content(self):
-        deleted = False
-        while not deleted:
-            try: 
-                logger.info("Deleting topic %s", self.topic)
-                self.admin.delete_topics([self.topic])
-            except UnknownTopicOrPartitionError:
-                logger.info("Topic %s unknown, skipping", self.topic)
-                deleted = True
-        self._create_topic()
-
 
 class KafkaSink:
-    def __init__(self, bootstrap_servers, topic):
-        assert os.path.isfile(SSL_CA_FILE)
-        assert os.path.isfile(SSL_AUTH_CERT)
-        assert os.path.isfile(SSL_KEY)
-
+    def __init__(self, kafka_config):
         self.producer = KafkaProducer(
-                bootstrap_servers=bootstrap_servers,
-                acks='all',  # TODO: make it async
+                bootstrap_servers=kafka_config["bootstrap_servers"],
                 security_protocol="SSL",
-                ssl_cafile=SSL_CA_FILE,
-                ssl_certfile=SSL_AUTH_CERT,
-                ssl_keyfile=SSL_KEY,
+                ssl_cafile=kafka_config["ssl_cafile"],
+                ssl_certfile=kafka_config["ssl_certfile"],
+                ssl_keyfile=kafka_config["ssl_keyfile"],
                 max_block_ms=MAX_BLOCK_MS)
-        self.topic = topic
+        self.topic = kafka_config["topic"]
 
     def __call__(self, check_result: CheckResult):
         message = json.dumps(check_result._asdict()).encode("utf-8")
@@ -80,25 +59,19 @@ class KafkaSink:
 
 
 class KafkaReader:
-    def __init__(self, bootstrap_servers, topic, sink):
-        assert os.path.isfile(SSL_CA_FILE)
-        assert os.path.isfile(SSL_AUTH_CERT)
-        assert os.path.isfile(SSL_KEY)
-
+    def __init__(self, kafka_config, sink):
         self.consumer = KafkaConsumer(
-                topic,
-                bootstrap_servers=bootstrap_servers,
+                kafka_config["topic"],
                 consumer_timeout_ms=1000,
                 auto_offset_reset='earliest',
+                bootstrap_servers=kafka_config["bootstrap_servers"],
                 security_protocol="SSL",
-                ssl_cafile=SSL_CA_FILE,
-                ssl_certfile=SSL_AUTH_CERT,
-                ssl_keyfile=SSL_KEY)
-        self.topic = topic
+                ssl_cafile=kafka_config["ssl_cafile"],
+                ssl_certfile=kafka_config["ssl_certfile"],
+                ssl_keyfile=kafka_config["ssl_keyfile"])
         self.sink = sink
 
     def run(self):
         for message in self.consumer:
             deserialized = CheckResult(**json.loads(message))
-            sink(deserialized)
-        
+            self.sink(deserialized)

@@ -2,14 +2,15 @@ import requests
 from web_monitor.check_result import CheckResult
 import time
 
-#TODO: make an enum
+# TODO: make an enum
 CONNECTION_REFUSED = 521
+
 
 class HttpRequester:
     def __init__(self, configuration: dict, sink):
         self.config = configuration
         self.sink = sink
-    
+
     def __start__(self):
         pass
 
@@ -31,6 +32,3 @@ class HttpRequester:
                     url=url,
                     status_code=CONNECTION_REFUSED)
                 self.sink(result)
-
-
-

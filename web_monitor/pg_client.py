@@ -6,36 +6,54 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-class PgClient():
-    def __init__(self, connection_string, database, table):
-        self.connection_string = connection_string
-        self.database = database
-        self.table = table
 
-        self.conn = psycopg2.connect(
-            connection_string)
-        self.conn.autocommit = True
-        self.cursor = self.conn.cursor()
+class PgClient():
+    def __init__(self, pg_config):
+        self.config = pg_config
+        self.table = "check_result"
+
+        with open(self.config["pw_file"], 'r') as f:
+            self.password = f.read()
         self.ensure_schema()
-        
+        self.conn = psycopg2.connect(
+            host=self.config["host"],
+            port=self.config["port"],
+            user=self.config["user"],
+            dbname=self.config["dbname"],
+            password=self.password,
+            sslmode='require')
+        self.cursor = self.conn.cursor()
 
     def ensure_schema(self):
         """ Ensure that database, schema, and tables are created
         """
-        try:
-            self.cursor.execute("CREATE DATABASE {};".format(self.database))
-        except psycopg2.errors.DuplicateDatabase:
-            logger.info("Database %s exists", self.database)
+        with psycopg2.connect(
+                host=self.config["host"],
+                port=self.config["port"],
+                user=self.config["user"],
+                dbname=self.config["default_dbname"],
+                password=self.password,
+                sslmode='require') as bootstrap_connection:
+            bootstrap_connection.autocommit = True
+            cursor = bootstrap_connection.cursor()
+            try:
+                cursor.execute("CREATE DATABASE {config[dbname]};".format(config=self.config))
+            except psycopg2.errors.DuplicateDatabase:
+                logger.info("Database %s exists", self.config["dbname"])
 
-        self.conn.close()
-        self.conn = psycopg2.connect(self.connection_string, dbname=self.database)
-        self.cursor = self.conn.cursor()
-        self.cursor.execute("""CREATE TABLE IF NOT EXISTS {table} (
-            timestamp TIMESTAMP,
-            url VARCHAR,
-            status_code NUMERIC
-        );""".format(table=self.table))
-            
+        with psycopg2.connect(
+                host=self.config["host"],
+                port=self.config["port"],
+                user=self.config["user"],
+                dbname=self.config["dbname"],
+                password=self.password,
+                sslmode='require') as bootstrap_connection:
+            cursor = bootstrap_connection.cursor()
+            cursor.execute("""CREATE TABLE IF NOT EXISTS {table} (
+                timestamp TIMESTAMP,
+                url VARCHAR,
+                status_code NUMERIC
+            );""".format(table=self.table))
 
     def __call__(self, check_result: CheckResult):
         self.cursor.execute("""

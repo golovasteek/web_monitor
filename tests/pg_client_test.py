@@ -1,18 +1,25 @@
 import os
-from context import web_monitor
+from context import web_monitor  # noqa
 from web_monitor.pg_client import PgClient
 from web_monitor.check_result import CheckResult
 
-CONNECTION_STRING = os.environ["TEST_PG_CONNECTION_STRING"]
 
-TEST_ITEM=CheckResult(
+TEST_ITEM = CheckResult(
     timestamp=1,
     url="http://example.com",
     status_code=200
     )
 
-def test_connect():
-    client = PgClient(CONNECTION_STRING, "test_db", "status_log")
-    client(TEST_ITEM)
+TEST_PG_CONFIG = {
+    "dbname": "test_web_monitor",
+    "default_dbname": "defaultdb",
+    "host": "pg-26b4b6c0-golovasteek-50e3.aivencloud.com",
+    "port": 20595,
+    "user": "avnadmin",
+    "pw_file": "./certs/pg_password"
+}
 
-           
+
+def test_connect():
+    client = PgClient(TEST_PG_CONFIG)
+    client(TEST_ITEM)
