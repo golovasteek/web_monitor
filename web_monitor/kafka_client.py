@@ -81,7 +81,6 @@ class KafkaReader:
 
     def run(self):
         poll_result = self.consumer.poll(update_offsets=False)
-        print(poll_result)
         messages = poll_result.get(self.config["topic"], [])
 
         self.sink([message.value for message in messages])

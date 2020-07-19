@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 
 import yaml
 
-from web_monitor.kafka_producer import KafkaReader
+from web_monitor.kafka_client import KafkaReader
 from web_monitor.pg_client import PgClient
 
 DESCRIPTION = """

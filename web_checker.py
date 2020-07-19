@@ -4,7 +4,7 @@ import time
 
 import yaml
 from web_monitor.http_requester import do_requests
-from web_monitor.kafka_producer import KafkaSink
+from web_monitor.kafka_client import KafkaSink
 
 DESCRIPTION = """
 Periodically check the web-pages availability and publish test results into Kafka.
