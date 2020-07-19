@@ -1,5 +1,6 @@
 import logging
 import psycopg2
+from web_monitor.check_result import CheckResult
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -36,10 +37,10 @@ class PgClient():
         );""".format(table=self.table))
             
 
-    def __call__(self, report):
+    def __call__(self, check_result: CheckResult):
         self.cursor.execute("""
             INSERT INTO {table} (timestamp, url, status_code)
-            VALUES ('{timestamp}', '{url}', {status_code})
+            VALUES (to_timestamp({result.timestamp}), '{result.url}', {result.status_code})
             """.format(
                 table=self.table,
-                **report))
+                result=check_result))

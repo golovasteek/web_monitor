@@ -1,4 +1,6 @@
 import requests
+from web_monitor.check_result import CheckResult
+import time
 
 #TODO: make an enum
 CONNECTION_REFUSED = 521
@@ -14,17 +16,21 @@ class HttpRequester:
     def do_requests(self):
         for page in self.config["pages"]:
             url = page["url"]
+            timestamp = int(time.time())
             try:
                 resp = requests.get(url, timeout=1.0)
-                self.sink({
-                    "url": url,
-                    "status_code": resp.status_code
-                    })
+                result = CheckResult(
+                    timestamp=timestamp,
+                    url=url,
+                    status_code=resp.status_code)
+
+                self.sink(result)
             except requests.exceptions.ConnectionError:
-                self.sink({
-                    "url": url,
-                    "status_code": CONNECTION_REFUSED
-                })
+                result = CheckResult(
+                    timestamp=timestamp,
+                    url=url,
+                    status_code=CONNECTION_REFUSED)
+                self.sink(result)
 
 
 

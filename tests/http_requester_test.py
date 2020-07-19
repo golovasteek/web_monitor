@@ -62,7 +62,7 @@ def test_non_existing_url():
     requester.do_requests()
 
     assert len(sink.reports) == 1
-    assert sink.reports[0]["status_code"] == 521
+    assert sink.reports[0].status_code == 521
 
 def test_success(http_server):
     server, thread = http_server
@@ -78,4 +78,4 @@ def test_success(http_server):
     requester.do_requests()
     
     assert len(sink.reports) == 1
-    assert sink.reports[0]["status_code"] == 200
+    assert sink.reports[0].status_code == 200

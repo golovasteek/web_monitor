@@ -5,6 +5,7 @@ import logging
 from kafka import KafkaProducer, KafkaConsumer, KafkaAdminClient
 from kafka.admin import NewTopic
 from kafka.errors import TopicAlreadyExistsError, UnknownTopicOrPartitionError
+from web_monitor.check_result import CheckResult
 
 MAX_BLOCK_MS = 10000
 
@@ -73,9 +74,10 @@ class KafkaSink:
                 max_block_ms=MAX_BLOCK_MS)
         self.topic = topic
 
-    def __call__(self, test_report):
-        message = json.dumps(test_report).encode("utf-8")
+    def __call__(self, check_result: CheckResult):
+        message = json.dumps(check_result._asdict()).encode("utf-8")
         self.producer.send(self.topic, message)
+
 
 class KafkaReader:
     def __init__(self, bootstrap_servers, topic, sink):
@@ -97,6 +99,6 @@ class KafkaReader:
 
     def run(self):
         for message in self.consumer:
-            deserialized = json.loads(message)
-            sink(message)
+            deserialized = CheckResult(**json.loads(message))
+            sink(deserialized)
         
