@@ -1,4 +1,5 @@
-from http_requester import HttpRequester
+from context import web_monitor
+from web_monitor.http_requester import HttpRequester
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import random
 import threading

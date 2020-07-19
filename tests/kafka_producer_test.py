@@ -1,4 +1,5 @@
-from kafka_producer import KafkaSink, KafkaReader, KafkaAdmin
+from context import web_monitor
+from web_monitor.kafka_producer import KafkaSink, KafkaReader, KafkaAdmin
 
 TEST_SERVERS = [
     "kafka-1548488a-golovasteek-50e3.aivencloud.com:20597"
@@ -21,7 +22,10 @@ def test_simple():
 def test_produce_consume():
     admin = KafkaAdmin(TEST_SERVERS, TEST_TOPIC)
     
-    consumer = KafkaReader(TEST_SERVERS, TEST_TOPIC)
+    def mock_sink(report):
+        pass
+
+    consumer = KafkaReader(TEST_SERVERS, TEST_TOPIC, mock_sink)
     for message in consumer.consumer:
         pass
 
