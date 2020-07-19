@@ -21,14 +21,13 @@ if __name__ == "__main__":
     with open(args.config, 'r') as config_file:
         config = yaml.load(config_file, Loader=yaml.SafeLoader)
 
-    sink = KafkaSink(config["kafka"])
-    
-    next_iteration = time.time()
-    try:
-        while True:
-            do_requests(config["pages"], sink)
-            now = time.time()
-            next_iteration = max(next_iteration + CHECK_PERIOD_S, now)
-            time.sleep(next_iteration - now)
-    except KeyboardInterrupt:
-        print("Shutting down...")
+    with KafkaSink(config["kafka"]) as sink:
+        next_iteration = time.time()
+        try:
+            while True:
+                do_requests(config["pages"], sink)
+                now = time.time()
+                next_iteration = max(next_iteration + CHECK_PERIOD_S, now)
+                time.sleep(next_iteration - now)
+        except KeyboardInterrupt:
+            print("Shutting down...")

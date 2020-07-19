@@ -90,11 +90,18 @@ class KafkaReader:
         logger.debug(
             self.consumer.partitions_for_topic(self.config["topic"]))
         self.messages_read = 0
+        self.last_offset = -1
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        self._log_status()
         logger.info("Exiting consumer...")
         self.consumer.close(autocommit=False)
+
+    def _log_status(self):
+        logger.info(
+            "Messages read: %d, recent offset: %d",
+            self.messages_read, self.last_offset)
 
     def run(self):
         poll_result = self.consumer.poll(timeout_ms=100)
@@ -103,15 +110,17 @@ class KafkaReader:
             assert topic_parition.topic == self.config["topic"]
             messages += partition_messages
 
+        if not messages:
+            return
+
         # NOTE: If message processing takes more than max_poll_timeout_ms
         # which defaults to 300000 (5 min), our consumer can be considered dead
         # and will stop receving messages.
         self.sink(message.value for message in messages)
         self.messages_read += len(messages)
+        self.last_offset = messages[-1].offset
         if self.messages_read // 100 > (self.messages_read - len(messages)) // 100:
-            logger.info(
-                "Messages read: %d, recent offset: %d",
-                self.messages_read, messages[-1].offset)
+            self._log_status()
 
         # commit offsets, only if sink call was successful
         self.consumer.commit()
