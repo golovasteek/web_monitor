@@ -7,7 +7,9 @@ from web_monitor.check_result import CheckResult
 TEST_ITEM = CheckResult(
     timestamp=1,
     url="http://example.com",
-    status_code=200
+    status_code=200,
+    response_time=0.1,
+    match_content=None
     )
 
 TEST_PG_CONFIG = {

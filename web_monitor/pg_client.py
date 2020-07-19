@@ -1,4 +1,5 @@
 import logging
+import datetime
 import psycopg2
 from web_monitor.check_result import CheckResult
 
@@ -58,16 +59,23 @@ class PgClient():
                 sslmode='require') as bootstrap_connection:
             cursor = bootstrap_connection.cursor()
             cursor.execute("""CREATE TABLE IF NOT EXISTS {table} (
-                timestamp TIMESTAMP,
-                url VARCHAR,
-                status_code NUMERIC,
+                timestamp TIMESTAMP NOT NULL,
+                url VARCHAR NOT NULL,
+                status_code NUMERIC NOT NULL,
+                response_time NUMERIC NOT NULL,
+                match_content BOOLEAN,
                 PRIMARY KEY (timestamp, url)
             );""".format(table=self.table))
 
-    def __call__(self, check_result: CheckResult):
-        self.cursor.execute("""
-            INSERT INTO {table} (timestamp, url, status_code)
-            VALUES (to_timestamp({result.timestamp}), '{result.url}', {result.status_code})
-            """.format(
-                table=self.table,
-                result=check_result))
+    def __call__(self, result: CheckResult):
+        self.cursor.execute(
+            """INSERT INTO {table} (timestamp, url, status_code, response_time, match_content)
+               VALUES (%s, %s, %s, %s, %s);""".format(table=self.table),
+            (
+                datetime.datetime.fromtimestamp(result.timestamp),
+                result.url,
+                result.status_code,
+                result.response_time,
+                result.match_content
+            )
+        )

@@ -10,9 +10,23 @@ random.seed(1987)
 
 class MockRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write("OK".encode("utf-8"))
+        if self.path in ['/', '/foo', '/bar']:
+            self.send_response(200)
+            self.end_headers()
+            if self.path == '/':
+                self.wfile.write("OK".encode("utf-8"))
+            elif self.path == '/foo':
+                self.wfile.write("foo".encode("utf-8"))
+            elif self.path == '/bar':
+                self.wfile.write("bar".encode("utf-8"))
+        elif self.path == ['/error_500']:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write("Internal server error".encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write("Page not found".encode("utf-8"))
 
 
 @pytest.fixture
@@ -37,7 +51,7 @@ class SinkMock():
         self.reports.append(test_report)
 
 
-def test_non_existing_url():
+def test_non_existing_host():
     configuration = [
             {
                 "url": "http://localhost:8080"
@@ -49,6 +63,21 @@ def test_non_existing_url():
 
     assert len(sink.reports) == 1
     assert sink.reports[0].status_code == 521
+
+
+def test_not_found(http_server):
+    server, thread = http_server
+    configuration = [
+            {
+                "url": "http://localhost:{port}/non_existing_path".format(port=server.server_port)
+            }
+        ]
+    sink = SinkMock()
+
+    do_requests(configuration, sink)
+
+    assert len(sink.reports) == 1
+    assert sink.reports[0].status_code == 404
 
 
 def test_success(http_server):
@@ -63,6 +92,28 @@ def test_success(http_server):
 
     assert len(sink.reports) == 1
     assert sink.reports[0].status_code == 200
+    assert sink.reports[0].response_time > 0
+    assert sink.reports[0].match_content is None
 
-# TODO:
-# test for connection timeout
+
+def test_content(http_server):
+    server, thread = http_server
+    configuration = [
+            {
+                "url": "http://localhost:{port}/foo".format(port=server.server_port),
+                "match_content": "f[o]+"
+            },
+            {
+                "url": "http://localhost:{port}/bar".format(port=server.server_port),
+                "match_content": "f[o]+"
+            }
+        ]
+    sink = SinkMock()
+    do_requests(configuration, sink)
+
+    assert len(sink.reports) == 2
+    assert sink.reports[0].status_code == 200
+    assert sink.reports[1].status_code == 200
+
+    assert sink.reports[0].match_content is True
+    assert sink.reports[1].match_content is False
