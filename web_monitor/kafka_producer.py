@@ -72,6 +72,7 @@ class KafkaReader:
                 ssl_cafile=self.config["ssl_cafile"],
                 ssl_certfile=self.config["ssl_certfile"],
                 ssl_keyfile=self.config["ssl_keyfile"])
+        self.messages_read = 0
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -82,3 +83,8 @@ class KafkaReader:
             deserialized = CheckResult(**json.loads(message.value))
             self.sink(deserialized)
             self.consumer.commit()
+
+            if self.messages_read % 100 == 0:
+                logger.info(
+                    "Messages read: %d, recent offset: %d",
+                    self.messages_read, message.offset)
