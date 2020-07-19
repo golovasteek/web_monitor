@@ -37,7 +37,7 @@ def do_requests(pages_configuration, sink):
                 response_time=resp.elapsed.total_seconds(),
                 match_content=match)
 
-            sink(result)
+            sink([result])
         except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
             result = CheckResult(
                 timestamp=timestamp,
@@ -45,4 +45,4 @@ def do_requests(pages_configuration, sink):
                 status_code=CONNECTION_REFUSED,
                 response_time=time.time() - timestamp,
                 match_content=None)
-            sink(result)
+            sink([result])

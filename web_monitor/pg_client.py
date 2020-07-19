@@ -1,7 +1,6 @@
 import logging
 import datetime
 import psycopg2
-from web_monitor.check_result import CheckResult
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -67,15 +66,15 @@ class PgClient():
                 PRIMARY KEY (timestamp, url)
             );""".format(table=self.table))
 
-    def __call__(self, result: CheckResult):
-        self.cursor.execute(
+    def __call__(self, result_list):
+        self.cursor.executemany(
             """INSERT INTO {table} (timestamp, url, status_code, response_time, match_content)
                VALUES (%s, %s, %s, %s, %s);""".format(table=self.table),
-            (
+            ((
                 datetime.datetime.fromtimestamp(result.timestamp),
                 result.url,
                 result.status_code,
                 result.response_time,
                 result.match_content
-            )
+            ) for result in result_list)
         )

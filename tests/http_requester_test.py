@@ -47,8 +47,8 @@ class SinkMock():
     def __init__(self):
         self.reports = []
 
-    def __call__(self, test_report):
-        self.reports.append(test_report)
+    def __call__(self, test_reports):
+        self.reports += (test_reports)
 
 
 def test_non_existing_host():

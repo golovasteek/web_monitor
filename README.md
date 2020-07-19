@@ -33,4 +33,8 @@ Web Monitor includes two service executables:
 
 ## Design Notes
 
-The Web Monitor toolset was design with modularity in mind. The idea is, that there is a data producers and consumers. The data producers are configured by `sink` parameter, which should be a data consumer. Data consumer could be any callable object, which is called with every item of the data.
+The Web Monitor toolset was design with modularity in mind. The idea is, that there is a data producers and consumers.
+The data producers are configured by `sink` parameter, which should be a data consumer.
+Data consumer could be any callable object, which is called with collection of the data iterms.
+If call to the "sink" did not throw exception, than all the data is considered to be processed, 
+otherwise retry of the processing is needed.

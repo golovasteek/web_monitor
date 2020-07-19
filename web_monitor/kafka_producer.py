@@ -51,8 +51,9 @@ class KafkaSink:
         self.topic = kafka_config["topic"]
         _ensure_topics(kafka_config)
 
-    def __call__(self, check_result: CheckResult):
-        message = json.dumps(check_result._asdict()).encode("utf-8")
+    def __call__(self, check_results):
+        assert len(check_results) == 1, "Only collections of size 1 are supported by KafkaSink"
+        message = json.dumps(check_results[0]._asdict()).encode("utf-8")
         self.producer.send(self.topic, message)
 
 
@@ -64,10 +65,10 @@ class KafkaReader:
     def __enter__(self):
         self.consumer = KafkaConsumer(
                 self.config["topic"],
-                consumer_timeout_ms=1000,
                 auto_offset_reset='earliest',
                 group_id=self.config["consumer_group_id"],
                 bootstrap_servers=self.config["bootstrap_servers"],
+                value_deserializer=lambda x: CheckResult(**json.loads(x)),
                 security_protocol="SSL",
                 ssl_cafile=self.config["ssl_cafile"],
                 ssl_certfile=self.config["ssl_certfile"],
@@ -79,12 +80,15 @@ class KafkaReader:
         self.consumer.close(autocommit=False)
 
     def run(self):
-        for message in self.consumer:
-            deserialized = CheckResult(**json.loads(message.value))
-            self.sink(deserialized)
-            self.consumer.commit()
+        poll_result = self.consumer.poll(update_offsets=False)
+        print(poll_result)
+        messages = poll_result.get(self.config["topic"], [])
 
-            if self.messages_read % 100 == 0:
-                logger.info(
-                    "Messages read: %d, recent offset: %d",
-                    self.messages_read, message.offset)
+        self.sink([message.value for message in messages])
+        self.messages_read += len(messages)
+        if self.messages_read // 100 > (self.messages_read - len(messages)) // 100:
+            logger.info(
+                "Messages read: %d, recent offset: %d",
+                self.messages_read, messages[-1].offset)
+
+        self.consumer.commit()

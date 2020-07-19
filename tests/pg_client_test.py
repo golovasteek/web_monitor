@@ -39,7 +39,7 @@ def test_connect_with_empty_db():
             cursor.execute("DROP DATABASE {};".format(TEST_PG_CONFIG["dbname"]))
 
     with PgClient(TEST_PG_CONFIG) as client:
-        client(TEST_ITEM)
+        client([TEST_ITEM])
 
     with psycopg2.connect(
             host=TEST_PG_CONFIG["host"],
