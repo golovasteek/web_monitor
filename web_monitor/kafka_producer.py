@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def ensure_topics(kafka_config):
+def _ensure_topics(kafka_config):
     admin = KafkaAdminClient(
        bootstrap_servers=kafka_config["bootstrap_servers"],
        security_protocol="SSL",
@@ -49,7 +49,7 @@ class KafkaSink:
                 ssl_keyfile=kafka_config["ssl_keyfile"],
                 max_block_ms=MAX_BLOCK_MS)
         self.topic = kafka_config["topic"]
-        ensure_topics(kafka_config)
+        _ensure_topics(kafka_config)
 
     def __call__(self, check_result: CheckResult):
         message = json.dumps(check_result._asdict()).encode("utf-8")

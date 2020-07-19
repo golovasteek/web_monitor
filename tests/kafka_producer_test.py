@@ -24,23 +24,21 @@ TEST_ITEM = CheckResult(
     )
 
 
-def mock_sink(report):
-    pass
-
-
 def test_produce_consume():
+    messages = []
+
+    def mock_sink(message):
+        messages.append(message)
 
     with KafkaReader(TEST_CONFIG, mock_sink) as consumer:
-        for message in consumer.consumer:
-            pass
+        consumer.run()
+        messages.clear()
 
         producer = KafkaSink(TEST_CONFIG)
         producer(TEST_ITEM)
         producer.producer.close()
 
-        messages = []
-        for message in consumer.consumer:
-            messages.append(message)
+        consumer.run()
 
         assert len(messages) == 1
 

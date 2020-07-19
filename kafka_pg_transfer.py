@@ -6,6 +6,10 @@ import yaml
 from web_monitor.kafka_producer import KafkaReader
 from web_monitor.pg_client import PgClient
 
+DESCRIPTION = """
+Read sites availabiliry reports from the kafka service and commit them to PostgreSQL database
+"""
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-c", "--config", help="YAML config file", required=True)

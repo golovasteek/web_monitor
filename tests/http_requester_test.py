@@ -1,5 +1,5 @@
 from context import web_monitor  # noqa
-from web_monitor.http_requester import HttpRequester
+from web_monitor.http_requester import do_requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import random
 import threading
@@ -38,17 +38,14 @@ class SinkMock():
 
 
 def test_non_existing_url():
-    configuration = {
-        "pages": [
+    configuration = [
             {
                 "url": "http://localhost:8080"
             }
         ]
-    }
     sink = SinkMock()
-    requester = HttpRequester(configuration, sink)
 
-    requester.do_requests()
+    do_requests(configuration, sink)
 
     assert len(sink.reports) == 1
     assert sink.reports[0].status_code == 521
@@ -56,16 +53,13 @@ def test_non_existing_url():
 
 def test_success(http_server):
     server, thread = http_server
-    configuration = {
-        "pages": [
+    configuration = [
             {
                 "url": "http://localhost:{port}".format(port=server.server_port)
             }
         ]
-    }
     sink = SinkMock()
-    requester = HttpRequester(configuration, sink)
-    requester.do_requests()
+    do_requests(configuration, sink)
 
     assert len(sink.reports) == 1
     assert sink.reports[0].status_code == 200
