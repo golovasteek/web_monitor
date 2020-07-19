@@ -6,6 +6,9 @@ import yaml
 from web_monitor.http_requester import do_requests
 from web_monitor.kafka_client import KafkaSink
 
+
+CHECK_PERIOD_S = 5
+
 DESCRIPTION = """
 Periodically check the web-pages availability and publish test results into Kafka.
 """
@@ -20,9 +23,12 @@ if __name__ == "__main__":
 
     sink = KafkaSink(config["kafka"])
     
+    next_iteration = time.time()
     try:
         while True:
             do_requests(config["pages"], sink)
-            time.sleep(1)
+            now = time.time()
+            next_iteration = max(next_iteration + CHECK_PERIOD_S, now)
+            time.sleep(next_iteration - now)
     except KeyboardInterrupt:
         print("Shutting down...")

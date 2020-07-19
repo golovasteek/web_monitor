@@ -38,3 +38,23 @@ The data producers are configured by `sink` parameter, which should be a data co
 Data consumer could be any callable object, which is called with collection of the data iterms.
 If call to the "sink" did not throw exception, than all the data is considered to be processed, 
 otherwise retry of the processing is needed.
+
+Since part of the check is actually test response time, there is no session/connection chaching configured
+in the http_requester module.
+
+The requests to different pages are done syncroneously, and in case of many or slow pages checks it 
+could lead to the situation that one iteration of the check takes longer than check period.
+Currently it is not handled by the toolset, an issue can be worked around by starting multiple web_checker
+instances, with different set of pages to check.
+In further versions requests to different pages can be made asychroneously, but currently it is not 
+implemented in sake of simplicity.
+
+In postgresql client we generate the insert query as a string for a list of messages, since it 
+shows the best throughput comapring to other approaches such as inserting messages one by one, or
+using `executemany` method.
+
+## References
+* (Postgresql Documentation)[https://www.postgresql.org/docs/12/index.html]
+* (Kafka-Python documentation and examples)[https://kafka-python.readthedocs.io/en/master/usage.html]
+* (Python structure article)[https://docs.python-guide.org/writing/structure/]
+

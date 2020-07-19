@@ -36,9 +36,8 @@ def test_produce_consume():
         consumer.run()
         messages.clear()
 
-        producer = KafkaSink(TEST_CONFIG)
-        producer([TEST_ITEM])
-        producer.producer.close()
+        with KafkaSink(TEST_CONFIG) as producer:
+            producer([TEST_ITEM])
 
         consumer.run()
 

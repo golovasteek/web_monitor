@@ -1,10 +1,20 @@
 import logging
-import datetime
 import psycopg2
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+
+def _none_to_null(val):
+    """Convert None values to NULL string.
+
+    Can be used in for SQL queries formatting
+    """
+    if val is None:
+        return "NULL"
+    else:
+        return val
 
 
 class PgClient():
@@ -67,14 +77,18 @@ class PgClient():
             );""".format(table=self.table))
 
     def __call__(self, result_list):
-        self.cursor.executemany(
-            """INSERT INTO {table} (timestamp, url, status_code, response_time, match_content)
-               VALUES (%s, %s, %s, %s, %s);""".format(table=self.table),
-            ((
-                datetime.datetime.fromtimestamp(result.timestamp),
+        # Here we generate the insert query manually,
+        # instead of inserting one by one or using the `executemany` method
+        # since it is way faster with our queries
+        values = ", ".join("(to_timestamp({}), '{}', {}, {}, {})".format(
+                result.timestamp,
                 result.url,
                 result.status_code,
                 result.response_time,
-                result.match_content
-            ) for result in result_list)
-        )
+                _none_to_null(result.match_content)) for result in result_list)
+        if not values:
+            return
+        self.cursor.execute(
+            """INSERT INTO {table} (timestamp, url, status_code, response_time, match_content)
+            VALUES """.format(table=self.table) + values + ";"
+            )
